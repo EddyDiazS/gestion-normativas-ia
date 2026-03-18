@@ -1,0 +1,6 @@
+ARTÍCULO 74:   
+  La calificación promedio del estudiante en el periodo académico es 
+el cociente cuyo numerador es la suma de los productos que resultan 
+de multiplicar la calificación de cada asignatura por su respectivo 
+número de créditos, y cuyo denominador es el total de créditos 
+cursados en el periodo.  

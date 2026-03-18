@@ -1,0 +1,41 @@
+
+# VARIABLES DE ENTORNO 
+.env
+.env.local
+.env.prod
+.env.*.local
+
+# BACKEND — rag_normativas_api/
+rag_normativas_api/__pycache__/
+rag_normativas_api/**/__pycache__/
+rag_normativas_api/venv/
+rag_normativas_api/.venv/
+rag_normativas_api/env/
+rag_normativas_api/*.egg-info/
+rag_normativas_api/dist/
+rag_normativas_api/build/
+rag_normativas_api/.pytest_cache/
+rag_normativas_api/.mypy_cache/
+rag_normativas_api/*.log
+
+# BASE DE DATOS
+*.db
+*.sqlite
+*.sqlite3
+
+# IA — Modelos y caché 
+*.index
+faiss_index/
+.cache/
+sentence_transformers/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# SISTEMA OPERATIVO
+.DS_Store
+Thumbs.db
+Desktop.ini
