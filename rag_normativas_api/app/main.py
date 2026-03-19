@@ -48,7 +48,8 @@ def ask(
             UserRole.DECANO,
             UserRole.DIRECTOR,
             UserRole.DOCENTE,
-            UserRole.ESTUDIANTE
+            UserRole.ESTUDIANTE,
+            UserRole.ADMINISTRADOR
         )
     )
 ):
