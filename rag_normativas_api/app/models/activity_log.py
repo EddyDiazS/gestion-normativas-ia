@@ -13,4 +13,4 @@ class ActivityLog(Base):
 
     action = Column(String(255), nullable=False)
 
-    timestamp = Column(DateTime, server_default=func.now())
+    timestamp = Column(DateTime(timezone=True), server_default=func.now())

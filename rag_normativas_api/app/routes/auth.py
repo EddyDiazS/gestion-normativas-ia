@@ -4,6 +4,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from app.database import get_db
 from app.models.user import User
+from app.models.activity_log import ActivityLog
 from app.core.security import verify_password, create_access_token
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -13,6 +14,12 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
     user = db.query(User).filter(User.username == form_data.username).first()
 
+    log = ActivityLog(
+        user_id=user.id, 
+        action = f"Inicio de sesión para el usuario {user.username}({user.id})({user.role}))"
+    )
+    db.add(log)
+    db.commit()
     if not user:
         raise HTTPException(status_code=401, detail="Usuario incorrecto")
 
