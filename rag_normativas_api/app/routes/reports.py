@@ -3,6 +3,8 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.query_log import QueryLog
 from app.core.roles import require_roles, UserRole
+from app.models.activity_log import ActivityLog 
+from app.models.user import User 
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 
@@ -34,3 +36,25 @@ def get_faculty_queries(
         ).all()
 
     return queries
+@router.get("/activity_logs")
+def get_activity_logs(
+    db: Session = Depends(get_db),
+    user = Depends(require_roles(UserRole.RECTOR, UserRole.ADMINISTRADOR))
+):
+    logs = (
+        db.query(ActivityLog, User)
+        .join(User, ActivityLog.user_id == User.id, isouter=True)
+        .order_by(ActivityLog.timestamp.desc())
+        .all()
+    )
+    return [
+        {
+            "id":        row[0].id,
+            "user_id":   row[0].user_id,
+            "username":  row[1].username if row[1] else "—",
+            "role":      row[1].role     if row[1] else "—",
+            "action":    row[0].action,
+            "timestamp": row[0].timestamp.isoformat() if row[0].timestamp else None,
+        }
+        for row in logs
+    ]
