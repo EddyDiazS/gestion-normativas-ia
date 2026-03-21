@@ -14,17 +14,18 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 
     user = db.query(User).filter(User.username == form_data.username).first()
 
-    log = ActivityLog(
-        user_id=user.id, 
-        action = f"Inicio de sesión para el usuario {user.username}({user.id})({user.role}))"
-    )
-    db.add(log)
-    db.commit()
     if not user:
         raise HTTPException(status_code=401, detail="Usuario incorrecto")
 
     if not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=401, detail="Contraseña incorrecta")
+
+    log = ActivityLog(
+        user_id=user.id, 
+        action = f"Inicio de sesión para el usuario: {user.username}, con Id: {user.id}, y Rol: {user.role}"
+    )
+    db.add(log)
+    db.commit()
 
     token = create_access_token(
         data={
