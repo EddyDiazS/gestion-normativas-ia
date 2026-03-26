@@ -14,8 +14,8 @@ USUARIOS_INICIALES = [
         "role":     "ADMINISTRADOR",
         "faculty":  None,
         "program":  None,
+        "cedula":   "1032938114",
     },
-    # Usuarios de prueba — borrar desde /usuarios antes de producción
     {
         "username": "prueba_rector",
         "email":    "prueba.rector@konradlorenz.edu.co",
@@ -23,6 +23,7 @@ USUARIOS_INICIALES = [
         "role":     "RECTOR",
         "faculty":  None,
         "program":  None,
+        "cedula":   "1000000002",
     },
     {
         "username": "prueba_decano",
@@ -31,6 +32,7 @@ USUARIOS_INICIALES = [
         "role":     "DECANO",
         "faculty":  "Facultad de Ingeniería",
         "program":  None,
+        "cedula":   "1000000003",
     },
     {
         "username": "prueba_director",
@@ -39,6 +41,7 @@ USUARIOS_INICIALES = [
         "role":     "DIRECTOR",
         "faculty":  "Facultad de Ingeniería",
         "program":  "Ingeniería de Sistemas",
+        "cedula":   "1000000004",
     },
     {
         "username": "prueba_docente",
@@ -47,6 +50,7 @@ USUARIOS_INICIALES = [
         "role":     "DOCENTE",
         "faculty":  "Facultad de Ingeniería",
         "program":  "Ingeniería de Sistemas",
+        "cedula":   "1000000005",
     },
     {
         "username": "prueba_estudiante",
@@ -55,6 +59,7 @@ USUARIOS_INICIALES = [
         "role":     "ESTUDIANTE",
         "faculty":  "Facultad de Ingeniería",
         "program":  "Ingeniería de Sistemas",
+        "cedula":   "1000000006",
     },
 ]
 
@@ -75,8 +80,13 @@ def run_seed():
                     role            = datos["role"],
                     faculty         = datos["faculty"],
                     program         = datos["program"],
+                    cedula          = datos["cedula"],
                     is_active       = True,
                 ))
+            else: 
+                if not existe.cedula:
+                        existe.cedula = datos["cedula"]
+                        
         db.commit()
     except Exception as e:
         db.rollback()

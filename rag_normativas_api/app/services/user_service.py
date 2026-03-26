@@ -20,7 +20,8 @@ def create_user(db: Session, user: UserCreate):
         hashed_password=hashed_password,
         role=user.role,
         faculty=user.faculty,
-        program=user.program
+        program=user.program,
+        cedula=user.cedula
     )
     db.add(db_user)
     db.commit()
@@ -52,6 +53,8 @@ def update_user(db: Session, user_id: int, user_data: UserUpdate):
         db_user.faculty = user_data.faculty
     if user_data.program is not None:
         db_user.program = user_data.program
+    if user_data.cedula is not None:
+        db_user.cedula = user_data.cedula
     if user_data.is_active is not None:
         db_user.is_active = user_data.is_active
 

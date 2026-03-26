@@ -8,6 +8,7 @@ class UserBase(BaseModel):
     role: str
     faculty: Optional[str] = None
     program: Optional[str] = None
+    cedula: Optional[str] = None
 
 class UserCreate(UserBase):
     password: str
@@ -19,6 +20,7 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
     faculty: Optional[str] = None
     program: Optional[str] = None
+    cedula: Optional[str] = None
     is_active: Optional[bool] = None
 
 class UserResponse(UserBase):

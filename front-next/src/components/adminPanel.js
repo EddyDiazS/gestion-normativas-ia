@@ -84,7 +84,7 @@ export default function AdminPanel() {
       password: "",
       faculty:  user.faculty  || "",
       program:  user.program  || "",
-      codigo:   user.codigo   || "",
+      cedula:   user.cedula   || "",
     })
   }
 
@@ -96,7 +96,7 @@ export default function AdminPanel() {
     const bodyData = { ...formData }
     if (bodyData.faculty  === "") bodyData.faculty  = null
     if (bodyData.program  === "") bodyData.program  = null
-    if (bodyData.codigo   === "") bodyData.codigo   = null
+    if (bodyData.cedula   === "") bodyData.cedula   = null
     if (bodyData.password === "") delete bodyData.password
 
     const res = await fetch(`http://127.0.0.1:8000/users/${editingUser}`, {
@@ -113,7 +113,7 @@ export default function AdminPanel() {
   const handleCreateClick = () => {
     setCreatingUser(true)
     setShowPassword(false)
-    setFormData({ username: "", email: "", password: "", role: "ESTUDIANTE", faculty: "", program: "", codigo: "" })
+    setFormData({ username: "", email: "", password: "", role: "ESTUDIANTE", faculty: "", program: "", cedula: "" })
   }
 
   const handleCreate = async (e) => {
@@ -124,7 +124,7 @@ export default function AdminPanel() {
     const bodyData = { ...formData }
     if (bodyData.faculty === "") bodyData.faculty = null
     if (bodyData.program === "") bodyData.program = null
-    if (bodyData.codigo  === "") bodyData.codigo  = null
+    if (bodyData.cedula  === "") bodyData.cedula  = null
 
     const res = await fetch("http://127.0.0.1:8000/users", {
       method: "POST",
@@ -309,7 +309,7 @@ export default function AdminPanel() {
               <tr>
                 <th>ID</th>
                 <th>Username</th>
-                <th>Código</th>
+                <th>Cedula</th>
                 <th>Email</th>
                 <th>Rol</th>
                 <th>Facultad</th>
@@ -323,7 +323,7 @@ export default function AdminPanel() {
                   <td style={{ color: "var(--text-3)", fontSize: 12 }}>#{user.id}</td>
                   <td style={{ color: "var(--text-1)", fontWeight: 600 }}>{user.username}</td>
                   <td style={{ color: "var(--accent)", fontFamily: "monospace", fontSize: 13 }}>
-                    {user.codigo || <span style={{ color: "var(--text-3)", fontSize: 12 }}>—</span>}
+                    {user.cedula || <span style={{ color: "var(--text-3)", fontSize: 12 }}>—</span>}
                   </td>
                   <td style={{ color: "var(--text-3)" }}>{user.email}</td>
                   <td><span className={getRoleBadgeClass(user.role)}>{user.role}</span></td>
@@ -381,9 +381,9 @@ export default function AdminPanel() {
                     className="form-input" placeholder="Opcional" />
                 </Field>
               </div>
-              <Field label="Código">
-                <input type="text" value={formData.codigo} onChange={e => set("codigo", e.target.value)}
-                  className="form-input" placeholder="Ej: 2024-001 (Opcional)" />
+              <Field label="Cedula">
+                <input type="text" value={formData.cedula} onChange={e => set("cedula", e.target.value)}
+                  className="form-input" placeholder="Ej: 100000001" />
               </Field>
               <div className="modal-actions">
                 <button type="button" onClick={() => setEditingUser(null)} className="btn-cancel">Cancelar</button>
@@ -424,9 +424,9 @@ export default function AdminPanel() {
                     {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
                   </select>
                 </Field>
-                <Field label="Código">
-                  <input type="text" value={formData.codigo} onChange={e => set("codigo", e.target.value)}
-                    className="form-input-green" placeholder="Ej: 2024-001 (Opcional)" />
+                <Field label="Cedula">
+                  <input type="text" value={formData.cedula} onChange={e => set("cedula", e.target.value)}
+                    className="form-input-green" placeholder="Ej: 100000001 " />
                 </Field>
               </div>
               <div className="form-grid-2">
