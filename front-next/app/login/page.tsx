@@ -29,7 +29,7 @@ export default function Login() {
       if (data.access_token) {
         localStorage.setItem("token", data.access_token);
         localStorage.setItem("user", JSON.stringify({
-          username: username,
+          username: data.username,
           role: data.role
         }));
         router.push("/chat");

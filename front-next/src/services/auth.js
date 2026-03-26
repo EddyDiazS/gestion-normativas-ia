@@ -23,6 +23,10 @@ export const login = async (username, password) => {
 
   localStorage.setItem("token", data.access_token);
   localStorage.setItem("role", data.role || "");
+  localStorage.setItem("user", JSON.stringify({
+    username: data.username,
+    role: data.role
+  }) );
 
   return data;
 };
