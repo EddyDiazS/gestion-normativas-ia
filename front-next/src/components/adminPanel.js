@@ -4,13 +4,21 @@ import { useEffect, useState, useMemo } from "react"
 
 const ROLES = ["ESTUDIANTE", "ADMINISTRADOR", "RECTOR", "DECANO", "DIRECTOR"]
 
+const facultades_programas = {
+  "Facultad de Matemáticas e Ingenierías": ["Ingeniería de Sistemas", "Ingeniería Industrial", "Matematicas"],
+  "Escuela de Negocios": ["Administración de Negocios Internacionales", "Mercadeo"],
+  "Facultad de Psicología": ["Psicología"],
+  "Escuela de Posgrados": ["Posgrado"],
+}
+const facultades = Object.keys(facultades_programas)
+
 function getRoleBadgeClass(role) {
   switch (role) {
     case "ADMINISTRADOR": return "role-badge role-admin"
-    case "RECTOR":        return "role-badge role-rector"
-    case "DECANO":        return "role-badge role-decano"
-    case "DIRECTOR":      return "role-badge role-director"
-    default:              return "role-badge role-default"
+    case "RECTOR": return "role-badge role-rector"
+    case "DECANO": return "role-badge role-decano"
+    case "DIRECTOR": return "role-badge role-director"
+    default: return "role-badge role-default"
   }
 }
 
@@ -25,18 +33,18 @@ function Field({ label, children }) {
 
 export default function AdminPanel() {
 
-  const [users, setUsers]                 = useState([])
-  const [editingUser, setEditingUser]     = useState(null)
-  const [creatingUser, setCreatingUser]   = useState(false)
-  const [formData, setFormData]           = useState({})
-  const [showPassword, setShowPassword]   = useState(false)
+  const [users, setUsers] = useState([])
+  const [editingUser, setEditingUser] = useState(null)
+  const [creatingUser, setCreatingUser] = useState(false)
+  const [formData, setFormData] = useState({})
+  const [showPassword, setShowPassword] = useState(false)
   const [loadingAction, setLoadingAction] = useState(false)
 
   // ── Filtros ──
-  const [filterId,       setFilterId]       = useState("")
-  const [filterFaculty,  setFilterFaculty]  = useState("")
-  const [filterProgram,  setFilterProgram]  = useState("")
-  const [filterRole,     setFilterRole]     = useState("")
+  const [filterId, setFilterId] = useState("")
+  const [filterFaculty, setFilterFaculty] = useState("")
+  const [filterProgram, setFilterProgram] = useState("")
+  const [filterRole, setFilterRole] = useState("")
 
   const set = (key, val) => setFormData(prev => ({ ...prev, [key]: val }))
 
@@ -80,11 +88,11 @@ export default function AdminPanel() {
     setShowPassword(false)
     setFormData({
       username: user.username || "",
-      email:    user.email    || "",
+      email: user.email || "",
       password: "",
-      faculty:  user.faculty  || "",
-      program:  user.program  || "",
-      cedula:   user.cedula   || "",
+      faculty: user.faculty || "",
+      program: user.program || "",
+      cedula: user.cedula || "",
     })
   }
 
@@ -94,9 +102,9 @@ export default function AdminPanel() {
     const token = localStorage.getItem("token")
 
     const bodyData = { ...formData }
-    if (bodyData.faculty  === "") bodyData.faculty  = null
-    if (bodyData.program  === "") bodyData.program  = null
-    if (bodyData.cedula   === "") bodyData.cedula   = null
+    if (bodyData.faculty === "") bodyData.faculty = null
+    if (bodyData.program === "") bodyData.program = null
+    if (bodyData.cedula === "") bodyData.cedula = null
     if (bodyData.password === "") delete bodyData.password
 
     const res = await fetch(`http://127.0.0.1:8000/users/${editingUser}`, {
@@ -124,7 +132,7 @@ export default function AdminPanel() {
     const bodyData = { ...formData }
     if (bodyData.faculty === "") bodyData.faculty = null
     if (bodyData.program === "") bodyData.program = null
-    if (bodyData.cedula  === "") bodyData.cedula  = null
+    if (bodyData.cedula === "") bodyData.cedula = null
 
     const res = await fetch("http://127.0.0.1:8000/users", {
       method: "POST",
@@ -373,12 +381,19 @@ export default function AdminPanel() {
               </Field>
               <div className="form-grid-2">
                 <Field label="Facultad">
-                  <input type="text" value={formData.faculty} onChange={e => set("faculty", e.target.value)}
-                    className="form-input" placeholder="Opcional" />
+                  <select value={formData.faculty} onChange={e => { set("faculty", e.target.value); set("program", "") }}
+                    className="form-input">
+                    <option value="">Seleccionar…</option>
+                    {facultades.map(f => <option key={f} value={f}>{f}</option>)}
+                  </select>
                 </Field>
                 <Field label="Programa">
-                  <input type="text" value={formData.program} onChange={e => set("program", e.target.value)}
-                    className="form-input" placeholder="Opcional" />
+                  <select value={formData.program} onChange={e => set("program", e.target.value)}
+                    className="form-input"
+                    disabled={!formData.faculty || facultades_programas[formData.faculty]?.length === 0}>
+                    <option value="">Seleccionar…</option>
+                    {(facultades_programas[formData.faculty] || []).map(p => <option key={p} value={p}>{p}</option>)}
+                  </select>
                 </Field>
               </div>
               <Field label="Cedula">
@@ -393,63 +408,73 @@ export default function AdminPanel() {
               </div>
             </form>
           </div>
-        </div>
-      )}
+        </div >
+      )
+      }
 
       {/* ── Modal Crear ── */}
-      {creatingUser && (
-        <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setCreatingUser(false)}>
-          <div className="modal-content">
-            <div className="modal-header-green">
-              <h3 className="modal-title">Nuevo Usuario</h3>
-              <p className="modal-subtitle-green">Registrar cuenta en el sistema</p>
+      {
+        creatingUser && (
+          <div className="modal-overlay" onClick={e => e.target === e.currentTarget && setCreatingUser(false)}>
+            <div className="modal-content">
+              <div className="modal-header-green">
+                <h3 className="modal-title">Nuevo Usuario</h3>
+                <p className="modal-subtitle-green">Registrar cuenta en el sistema</p>
+              </div>
+              <form onSubmit={handleCreate} className="modal-form">
+                <div className="form-grid-2">
+                  <Field label="Username">
+                    <input type="text" required value={formData.username} onChange={e => set("username", e.target.value)}
+                      className="form-input-green" placeholder="nombre de usuario" />
+                  </Field>
+                  <Field label="Email">
+                    <input type="email" required value={formData.email} onChange={e => set("email", e.target.value)}
+                      className="form-input-green" placeholder="correo@ejemplo.com" />
+                  </Field>
+                </div>
+                <Field label="Contraseña">
+                  {pwdField("form-input-green")}
+                </Field>
+                <div className="form-grid-2">
+                  <Field label="Rol">
+                    <select value={formData.role} onChange={e => set("role", e.target.value)} className="form-input-green">
+                      {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Cedula">
+                    <input type="text" value={formData.cedula} onChange={e => set("cedula", e.target.value)}
+                      className="form-input-green" placeholder="Ej: 100000001 " />
+                  </Field>
+                </div>
+                <div className="form-grid-2">
+                  <Field label="Facultad">
+                    <select value={formData.faculty} onChange={e => { set("faculty", e.target.value); set("program", "") }}
+                      className="form-input-green">
+                      <option value="">Seleccionar…</option>
+                      {facultades.map(f => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                  </Field>
+                  <Field label="Programa">
+                    <select value={formData.program} onChange={e => set("program", e.target.value)}
+                      className="form-input-green"
+                      disabled={!formData.faculty || facultades_programas[formData.faculty]?.length === 0}>
+                      <option value="">Seleccionar…</option>
+                      {(facultades_programas[formData.faculty] || []).map(p => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                  </Field>
+                </div>
+                <div className="modal-actions">
+                  <button type="button" onClick={() => setCreatingUser(false)} className="btn-cancel">Cancelar</button>
+                  <button type="submit" className="btn-save-green" disabled={loadingAction}>
+                    {loadingAction ? "Creando…" : "Confirmar"}
+                  </button>
+                </div>
+              </form>
             </div>
-            <form onSubmit={handleCreate} className="modal-form">
-              <div className="form-grid-2">
-                <Field label="Username">
-                  <input type="text" required value={formData.username} onChange={e => set("username", e.target.value)}
-                    className="form-input-green" placeholder="nombre de usuario" />
-                </Field>
-                <Field label="Email">
-                  <input type="email" required value={formData.email} onChange={e => set("email", e.target.value)}
-                    className="form-input-green" placeholder="correo@ejemplo.com" />
-                </Field>
-              </div>
-              <Field label="Contraseña">
-                {pwdField("form-input-green")}
-              </Field>
-              <div className="form-grid-2">
-                <Field label="Rol">
-                  <select value={formData.role} onChange={e => set("role", e.target.value)} className="form-input-green">
-                    {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
-                  </select>
-                </Field>
-                <Field label="Cedula">
-                  <input type="text" value={formData.cedula} onChange={e => set("cedula", e.target.value)}
-                    className="form-input-green" placeholder="Ej: 100000001 " />
-                </Field>
-              </div>
-              <div className="form-grid-2">
-                <Field label="Facultad">
-                  <input type="text" value={formData.faculty} onChange={e => set("faculty", e.target.value)}
-                    className="form-input-green" placeholder="Opcional" />
-                </Field>
-                <Field label="Programa">
-                  <input type="text" value={formData.program} onChange={e => set("program", e.target.value)}
-                    className="form-input-green" placeholder="Opcional" />
-                </Field>
-              </div>
-              <div className="modal-actions">
-                <button type="button" onClick={() => setCreatingUser(false)} className="btn-cancel">Cancelar</button>
-                <button type="submit" className="btn-save-green" disabled={loadingAction}>
-                  {loadingAction ? "Creando…" : "Confirmar"}
-                </button>
-              </div>
-            </form>
           </div>
-        </div>
-      )}
+        )
+      }
 
-    </div>
+    </div >
   )
 }
