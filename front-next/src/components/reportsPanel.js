@@ -330,6 +330,23 @@ export default function ReportsPanel() {
                       <p className="report-question-label">Pregunta</p>
                       <p className="report-question-text">"{q.question}"</p>
                     </div>
+                    {q.answer && (
+                      <div style={{ marginTop: 10 }}>
+                        <p className="report-question-label">Respuesta del ChatBot</p>
+                        <p style={{
+                          fontSize: 13,
+                          color: "var(--text-2)",
+                          lineHeight: 1.6,
+                          background: "var(--surface)",
+                          border: "1px solid var(--border)",
+                          borderRadius: "var(--radius-md)",
+                          padding: "10px 14px",
+                          maxHeight: 120,
+                          overflowY: "auto",
+                          margin: 0
+                        }}>{q.answer}</p>
+                      </div>
+                    )}
                     <div style={{
                       display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10,
                       paddingTop: 12, borderTop: "1px solid var(--border)"
