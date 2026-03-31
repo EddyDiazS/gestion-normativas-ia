@@ -71,7 +71,7 @@ def ask(
         payload.top_k = 10
 
     # Ejecutar RAG
-    answer, verified, sources = rag_engine.answer(
+    answer, verified, sources, input_tokens, output_tokens, estimated_cost = rag_engine.answer(
         payload.question,
         payload.top_k,
         payload.session_id
@@ -82,8 +82,11 @@ def ask(
         user_id=user.id,
         faculty=user.faculty,
         question=payload.question,
-        answer=answer
-    )
+        answer=answer,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
+        estimated_cost=estimated_cost
+        )
 
     db.add(log)
     db.commit()

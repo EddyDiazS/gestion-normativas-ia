@@ -482,7 +482,7 @@ class RAGEngine:
                     SESSION_MEMORY.setdefault(session_id, []).append(
                         f"Pregunta: {question}\nRespuesta: {answer_text}"
                     )
-                return answer_text, True, []
+                return answer_text, True, [], 0, 0, 0.0
             
             normalized_question = normalize_question(question)
             retrieval_k = max(k, 10) if _is_complex_question(question) else k
@@ -495,7 +495,7 @@ class RAGEngine:
             )
 
             if not context_chunks:
-                return NO_ANSWER_CANONICAL, False, []
+                return NO_ANSWER_CANONICAL, False, [], 0, 0, 0.0
 
             context_parts = []
             context_truncated = False
@@ -550,11 +550,17 @@ RESPUESTA:
 )
 
             if not response or not response.text:
-                return "No se pudo generar una respuesta.", False, []
+                return "No se pudo generar una respuesta.", False, [], 0, 0, 0.0
 
             answer_text = response.text.strip()
+            print("Respuesta generada:", response.usage_metadata)
+
+            input_tokens = getattr (response.usage_metadata, "prompt_token_count", 0) or 0
+            output_tokens = getattr (response.usage_metadata, "candidates_token_count", 0) or 0
+            estimated_cost = (input_tokens * 0.30 / 1000000) + (output_tokens * 2.50 / 1_000_000)
+
             if _is_full_no_answer(answer_text):
-                return NO_ANSWER_CANONICAL, False, []
+                return NO_ANSWER_CANONICAL, False, [], input_tokens, output_tokens, estimated_cost
 
             if session_id:
                 SESSION_MEMORY.setdefault(session_id, []).append(
@@ -594,8 +600,8 @@ RESPUESTA:
                 and not has_partial_uncertainty
                 and not context_truncated
             )
-            return answer_text, verified, sources
+            return answer_text, verified, sources, input_tokens, output_tokens, estimated_cost
 
         except Exception as error:
             print("ERROR EN RAGEngine.answer():", error)
-            return "Ocurrio un error procesando la pregunta.", False, []
+            return "Ocurrio un error procesando la pregunta.", False, [], 0, 0, 0.0

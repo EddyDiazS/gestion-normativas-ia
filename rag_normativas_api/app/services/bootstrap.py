@@ -10,10 +10,21 @@ from app.database import engine
 try: 
     with engine.connect() as connection:
         connection.execute(text("ALTER TABLE users ADD cedula VARCHAR2(20) NULL"))
-        print("Conexión a la base de datos exitosa:", result.fetchone())
         connection.commit()
 except Exception:
     pass
+
+for column_sql in [
+    "ALTER TABLE query_logs ADD input_tokens NUMBER(10) DEFAULT 0",
+    "ALTER TABLE query_logs ADD output_tokens NUMBER(10) DEFAULT 0",
+    "ALTER TABLE query_logs ADD estimated_cost NUMBER(10,6) DEFAULT 0",
+]:
+    try:
+        with engine.connect() as connection:
+            connection.execute(text(column_sql))
+            connection.commit()
+    except Exception:
+        pass
 
 documents = load_documents(DATA_PATH)
 chunks = divide_by_articles(documents)
