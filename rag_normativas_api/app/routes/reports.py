@@ -58,3 +58,40 @@ def get_activity_logs(
         }
         for row in logs
     ]
+@router.get("/gastos")
+def get_gastos(
+        db: Session = Depends(get_db),
+        user = Depends(require_roles(UserRole.RECTOR, UserRole.ADMINISTRADOR))
+    ):
+        queries = db.query(QueryLog, User)\
+            .join(User, QueryLog.user_id == User.id, isouter=True)\
+            .order_by(QueryLog.created_at.desc())\
+            .all()
+        
+        total_input  = sum(row[0].input_tokens  or 0 for row in queries)
+        total_output = sum(row[0].output_tokens or 0 for row in queries)
+        total_cost   = sum(row[0].estimated_cost or 0 for row in queries)
+
+        return {
+            "resumen": {
+                "total_consultas": len(queries),
+                "total_input_tokens": total_input,
+                "total_output_tokens": total_output,
+                "total_tokens": total_input + total_output,
+                "costo_total_usd": total_cost
+            },
+            "detalle": [
+                {
+                    "id":             row[0].id,
+                    "username":       row[1].username if row[1] else "—",
+                    "faculty":        row[1].faculty  if row[1] else "—",
+                    "question":       row[0].question,
+                    "input_tokens":   row[0].input_tokens  or 0,
+                    "output_tokens":  row[0].output_tokens or 0,
+                    "total_tokens":   (row[0].input_tokens or 0) + (row[0].output_tokens or 0),
+                    "estimated_cost": row[0].estimated_cost or 0,
+                    "created_at":     row[0].created_at.isoformat() if row[0].created_at else None,  
+                }
+                for row in queries
+            ]
+        }

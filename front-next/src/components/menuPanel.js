@@ -42,7 +42,9 @@ export default function MenuPanel() {
   const adminLinks = []
   if (role === "ADMINISTRADOR" || role === "RECTOR") {
     adminLinks.push({ path: "/usuarios",  label: "Usuarios",  icon: "👥" })
+    adminLinks.push({ path: "/gastos", label: "Gastos de ChatBot", icon: "💰" })
   }
+  
   if (["ADMINISTRADOR","RECTOR","DECANO","DIRECTOR"].includes(role)) {
     adminLinks.push({ path: "/reportes", label: "Reportes",  icon: "📊" })
   }
