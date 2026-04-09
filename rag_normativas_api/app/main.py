@@ -18,7 +18,24 @@ from app.core.roles import require_roles, UserRole
 
 
 # Crear tablas
-Base.metadata.create_all(bind=engine)
+try:
+    Base.metadata.create_all(bind=engine, checkfirst=True)
+    print("✅ Tablas creadas correctamente")
+except Exception as e:
+    print(f"❌ Error en create_all: {e}")
+    from sqlalchemy import inspect, text
+    inspector = inspect(engine)
+    existing_tables = [t.lower() for t in inspector.get_table_names()]
+    print(f"📋 Tablas existentes: {existing_tables}")
+    for table in Base.metadata.sorted_tables:
+        if table.name.lower() not in existing_tables:
+            try:
+                table.create(bind=engine)
+                print(f"✅ Tabla creada: {table.name}")
+            except Exception as te:
+                print(f"❌ No se pudo crear {table.name}: {te}")
+        else:
+            print(f"ℹ️  Ya existe: {table.name}")
 run_seed()
 # Crear app
 app = FastAPI(title="RAG Normativas API")
