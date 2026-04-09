@@ -557,7 +557,7 @@ RESPUESTA:
 
             input_tokens = getattr (response.usage_metadata, "prompt_token_count", 0) or 0
             output_tokens = getattr (response.usage_metadata, "candidates_token_count", 0) or 0
-            estimated_cost = (input_tokens * 0.30 / 1000000) + (output_tokens * 2.50 / 1_000_000)
+            estimated_cost = (input_tokens * 0.30 / 1000000) + (output_tokens * 2.50 / 1000000)
 
             if _is_full_no_answer(answer_text):
                 return NO_ANSWER_CANONICAL, False, [], input_tokens, output_tokens, estimated_cost
