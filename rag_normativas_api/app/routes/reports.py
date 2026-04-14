@@ -84,6 +84,7 @@ def get_gastos(
                 {
                     "id":             row[0].id,
                     "username":       row[1].username if row[1] else "—",
+                    "role":           row[1].role     if row[1] else "—", 
                     "faculty":        row[1].faculty  if row[1] else "—",
                     "question":       row[0].question,
                     "input_tokens":   row[0].input_tokens  or 0,
@@ -95,3 +96,65 @@ def get_gastos(
                 for row in queries
             ]
         }
+@router.get("/gastos/top_usuarios")
+def get_top_usuarios(
+    db: Session = Depends(get_db),
+    user = Depends(require_roles(UserRole.RECTOR, UserRole.ADMINISTRADOR))
+):
+    from sqlalchemy import func as sqlfunc
+    resultados = (
+        db.query(
+            User.username,
+            User.faculty,
+            User.role,
+            sqlfunc.sum(QueryLog.input_tokens + QueryLog.output_tokens).label("total_tokens"),
+            sqlfunc.sum(QueryLog.estimated_cost).label("total_costo"),
+            sqlfunc.count(QueryLog.id).label("total_consultas")
+        )
+        .join(User, QueryLog.user_id == User.id)
+        .filter(QueryLog.input_tokens > 0)
+        .group_by(User.username, User.faculty, User.role)
+        .order_by(sqlfunc.sum(QueryLog.estimated_cost).desc())
+        .limit(5)
+        .all()
+    )
+    return [
+        {
+            "username":        r.username,
+            "faculty":         r.faculty or "—",
+            "role":            r.role,
+            "total_tokens":    int(r.total_tokens or 0),
+            "total_costo":     float(r.total_costo or 0),
+            "total_consultas": int(r.total_consultas or 0),
+        }
+        for r in resultados
+    ]
+
+@router.get("/gastos/por_facultad")
+def get_por_facultad(
+    db: Session = Depends(get_db),
+    user = Depends(require_roles(UserRole.RECTOR, UserRole.ADMINISTRADOR))
+):
+    from sqlalchemy import func as sqlfunc
+    resultados = (
+        db.query(
+            User.faculty,
+            sqlfunc.sum(QueryLog.input_tokens + QueryLog.output_tokens).label("total_tokens"),
+            sqlfunc.sum(QueryLog.estimated_cost).label("total_costo"),
+            sqlfunc.count(QueryLog.id).label("total_consultas")
+        )
+        .join(User, QueryLog.user_id == User.id)
+        .filter(QueryLog.input_tokens > 0)
+        .group_by(User.faculty)
+        .order_by(sqlfunc.sum(QueryLog.estimated_cost).desc())
+        .all()
+    )
+    return [
+        {
+            "faculty":         r.faculty or "Sin facultad",
+            "total_tokens":    int(r.total_tokens or 0),
+            "total_costo":     float(r.total_costo or 0),
+            "total_consultas": int(r.total_consultas or 0),
+        }
+        for r in resultados
+    ]
