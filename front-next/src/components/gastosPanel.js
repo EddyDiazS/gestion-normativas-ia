@@ -50,7 +50,7 @@ export default function GastosPanel() {
     if (filterRole && q.role !== filterRole) return false
     if (filterDateFrom && q.created_at && new Date(q.created_at) < new Date(filterDateFrom)) return false
     if (filterDateTo && q.created_at && new Date(q.created_at) > new Date(filterDateTo + "T23:59:59")) return false
-    if (filterText && !q.username.toLowerCase().includes(filterText.toLowerCase()) && !q.question.toLowerCase().includes(filterText.toLowerCase()) && !q.faculty.toLowerCase().includes(filterText.toLowerCase()))
+    if (filterText && !q.username?.toLowerCase().includes(filterText.toLowerCase()) && !q.question?.toLowerCase().includes(filterText.toLowerCase()) && !q.faculty?.toLowerCase().includes(filterText.toLowerCase()))
       return false
     return true
   })

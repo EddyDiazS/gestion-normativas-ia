@@ -75,7 +75,7 @@ DB_USER=system
 DB_PASSWORD=tu_contraseña_oracle
 DB_HOST=localhost
 DB_PORT=1521
-DB_SERVICE=tu_servicio_oracle
+DB_SERVICE=XEPDB1 o XE (Usar principalmente XEPDB1)
 ORACLE_CLIENT_PATH=ruta/al/instant_client
 ```
 
