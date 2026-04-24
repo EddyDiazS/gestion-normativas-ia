@@ -39,3 +39,28 @@ sentence_transformers/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# FRONTEND — front-next/
+front-next/node_modules/
+front-next/.next/
+front-next/out/
+front-next/.env
+front-next/.env.local
+
+# AGENTE ACADÉMICO — asistente_acamdemico_kl/
+asistente_acamdemico_kl/__pycache__/
+asistente_acamdemico_kl/**/__pycache__/
+asistente_acamdemico_kl/venv/
+asistente_acamdemico_kl/.venv/
+asistente_acamdemico_kl/*.log
+asistente_acamdemico_kl/.env
+
+# PYTHON GENERAL (cualquier carpeta)
+**/__pycache__/
+**/*.pyc
+**/*.pyo
+*.egg-info/
+
+# LOGS
+*.log
+logs/

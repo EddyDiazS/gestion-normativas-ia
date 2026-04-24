@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models.user import User
 
-# --- CONFIGURACIÓN (Lo que te piden) ---
+# --- CONFIGURACIÓN ---
 SECRET_KEY = "supersecretkey"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60

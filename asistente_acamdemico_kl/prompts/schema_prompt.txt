@@ -1,0 +1,74 @@
+USE agente_academico;
+
+CREATE TABLE programas (
+    id_programa     INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_programa VARCHAR(255) UNIQUE NOT NULL
+);
+
+CREATE TABLE jornadas (
+    id_jornada     INT AUTO_INCREMENT PRIMARY KEY,
+    nombre_jornada VARCHAR(255) UNIQUE NOT NULL
+);
+
+CREATE TABLE estudiantes (
+    Codigo_Estudiante       INT PRIMARY KEY,
+    EDAD                    INT,
+    FECHA_NACIMIENTO        DATE,
+    CODIGO_GENERO           VARCHAR(1),
+    SEMESTRES_TRANSCURRIDOS INT,
+    SEMESTRE_ACTUAL         INT,
+    PERIODO_INGRESO         INT,
+    SIN_JORNADA             INT,
+    id_programa             INT,
+    id_jornada              INT,
+    FOREIGN KEY (id_programa) REFERENCES programas(id_programa),
+    FOREIGN KEY (id_jornada)  REFERENCES jornadas(id_jornada)
+);
+
+CREATE TABLE rendimiento_academico (
+    id_rendimiento                   INT AUTO_INCREMENT PRIMARY KEY,
+    Codigo_Estudiante                INT UNIQUE NOT NULL,
+    PROMEDIO_PERIODO                 DECIMAL(6,2),
+    PROMEDIO_40_DEF                  INT,
+    CALIFICACION_MATEMATICAS         DECIMAL(6,2),
+    ENGLISH_SCORE                    INT,
+    TOTAL_COMP_LECTORA               INT,
+    EXAMEN_ORAL                      INT,
+    CALIFICACION_40                  INT,
+    CONOCIMIENTO_PROCEDIMENTAL       DECIMAL(10,5),
+    TOTAL_HABILIDADES_METACOGNITIVAS DECIMAL(10,5),
+    PERIODO                          INT,
+    FOREIGN KEY (Codigo_Estudiante) REFERENCES estudiantes(Codigo_Estudiante)
+);
+
+CREATE TABLE informacion_financiera (
+    id_financiera                INT AUTO_INCREMENT PRIMARY KEY,
+    Codigo_Estudiante            INT UNIQUE NOT NULL,
+    CODIGO_ESTRATO               INT,
+    FINANCIACION_INTERNA         VARCHAR(5),
+    FINANCIACION_INTERNA_SI      INT,
+    PROMEDIO_DIAS_PAGO           DECIMAL(6,2),
+    CANTIDAD_MORA                INT,
+    PORCENTAJE_BECA              INT,
+    CANTIDAD_CUOTAS              INT,
+    DEUDA                        DECIMAL(15,2),
+    FINANCIAMIENTO               DECIMAL(6,2),
+    PROMEDIO_ENTIDAD_FINANCIACION INT,
+    FOREIGN KEY (Codigo_Estudiante) REFERENCES estudiantes(Codigo_Estudiante)
+);
+
+CREATE TABLE ausencias (
+    id_ausencia             INT AUTO_INCREMENT PRIMARY KEY,
+    Codigo_Estudiante       INT UNIQUE NOT NULL,
+    AUSENCIA_INTERSEMESTRAL INT,
+    CANT_AUSENCIA_ANTERIOR  INT,
+    FOREIGN KEY (Codigo_Estudiante) REFERENCES estudiantes(Codigo_Estudiante)
+);
+
+CREATE TABLE riesgo_desercion (
+    id_riesgo              INT AUTO_INCREMENT PRIMARY KEY,
+    Codigo_Estudiante      INT UNIQUE NOT NULL,
+    RIESGO                 VARCHAR(20),
+    PROBABILIDAD_DESERCION DECIMAL(5,4),
+    FOREIGN KEY (Codigo_Estudiante) REFERENCES estudiantes(Codigo_Estudiante)
+);
