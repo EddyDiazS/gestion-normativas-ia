@@ -11,14 +11,19 @@ client = genai.Client(api_key=api_key)
 GEMINI_MODEL = "gemini-2.5-flash"
 
 
-def gemini_call(prompt: str, max_retries: int = 3) -> str:
+def gemini_call(prompt: str, max_retries: int = 3) -> tuple:
     for attempt in range(max_retries):
         try:
             response = client.models.generate_content(
                 model=GEMINI_MODEL,
                 contents=prompt
             )
-            return response.text.strip()
+            usage = response.usage_metadata
+            return (
+                response.text.strip(),
+                getattr(usage, "prompt_token_count", 0) or 0,
+                getattr(usage, "candidates_token_count", 0) or 0
+            )
         except Exception as e:
             error_str = str(e)
             if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
@@ -128,9 +133,9 @@ def get_access_denied_response(role: str, faculty: str = None, program: str = No
     )
 
 
-def generate_response(question: str, data, sql: str = "") -> str:
+def generate_response(question: str, data, sql: str = "") -> tuple:
     if data == "FUERA_DE_DOMINIO":
-        return OUT_OF_SCOPE_RESPONSE
+        return OUT_OF_SCOPE_RESPONSE, 0, 0
 
     data_str = "[] (sin registros)" if not data else str(data)
     prompt = RESPONSE_PROMPT.format(

@@ -16,5 +16,6 @@ class QueryLog(Base):
     input_tokens = Column(Integer, default=0)
     output_tokens = Column(Integer, default=0)
     estimated_cost = Column(Numeric(10,6), default=0.0)
+    agent_type = Column(String(20), default="RAG")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-
+    

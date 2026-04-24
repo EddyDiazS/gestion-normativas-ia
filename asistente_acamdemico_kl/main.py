@@ -75,7 +75,7 @@ class Question(BaseModel):
 
 @app.post("/ask")
 def ask_agent(request: Question):
-
+    print(f"🚨 AGENTE RECIBIÓ: role={request.role} | program={request.program} | question={request.question[:50]}")
     question   = request.question
     role       = (request.role or "RECTOR").upper()
     faculty    = request.faculty
@@ -100,7 +100,7 @@ def ask_agent(request: Question):
         question_for_sql = f"{question} (filtrar solo para el estudiante con codigo {user_id})"
 
     try:
-        sql = generate_sql(
+        sql , sql_inp, sql_out= generate_sql(
             question_for_sql,
             access_filter=access_filter,
             history_context=history_context
@@ -176,13 +176,18 @@ def ask_agent(request: Question):
             }
 
     try:
-        answer = generate_response(request.question, data, sql=sql)
+        answer, res_inp, res_out = generate_response(request.question, data, sql=sql)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error generando respuesta: {str(e)}")
+    
+    total_input = sql_inp + res_inp
+    total_output = sql_out + res_out
+    cost = round((total_input * 0.075 + total_output * 0.30) / 1_000_000, 6)
 
     # Guardar turno en el historial de la sesión
     save_turn(session_id, request.question, sql, data, answer)
 
+    print(f"✅ AGENTE ACADÉMICO → role={role} | program={program} | filas={len(data) if data else 0} | respuesta={answer[:80]}")
     return {
         "question":   request.question,
         "session_id": session_id,
@@ -190,7 +195,10 @@ def ask_agent(request: Question):
         "data":       data,
         "answer":     answer,
         "role":       role,
-        "turn":       len(get_history(session_id))
+        "turn":       len(get_history(session_id)),
+        "tokens_input": total_input,
+        "tokens_output": total_output,
+        "estimated_cost": cost
     }
 
 

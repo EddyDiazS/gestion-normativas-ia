@@ -40,6 +40,17 @@ except Exception as e:
         else:
             print(f"ℹ️  Ya existe: {table.name}")
 run_seed()
+
+from sqlalchemy import text, inspect as sa_inspect
+with engine.connect() as conn:
+    inspector = sa_inspect(engine)
+    cols = [c["name"].lower() for c in inspector.get_columns("query_logs")]
+    if "agent_type" not in cols:
+        conn.execute(text("ALTER TABLE query_logs ADD agent_type VARCHAR2(20) DEFAULT 'RAG'"))
+        conn.commit()
+# Crear app
+app = FastAPI(title="RAG Normativas API")
+
 # Crear app
 app = FastAPI(title="RAG Normativas API")
 
@@ -59,6 +70,7 @@ app.add_middleware(
 
 # Endpoint RAG
 @app.post("/ask", response_model=AnswerResponse)
+
 def ask(
     payload: QuestionRequest,
     db: Session = Depends(get_db),
@@ -92,9 +104,11 @@ def ask(
 
     # Ejecutar RAG
     agent_type = classify_question(payload.question)
+    print(f"🔍 user.role={user.role} | user.faculty={user.faculty} | user.program={user.program} | agent={agent_type}")
+
 
     if agent_type == "ACADEMIC":
-        answer = ask_academic_agent(
+        answer, input_tokens, output_tokens, estimated_cost = ask_academic_agent(
             question   = payload.question,
             role       = user.role,
             faculty    = user.faculty,
@@ -104,7 +118,6 @@ def ask(
         )
         verified = True
         sources  = []
-        input_tokens, output_tokens, estimated_cost = 0, 0, 0.0
     else:
         answer, verified, sources, input_tokens, output_tokens, estimated_cost = rag_engine.answer(
             payload.question, payload.top_k, payload.session_id
@@ -118,8 +131,10 @@ def ask(
         answer=answer,
         input_tokens=input_tokens,
         output_tokens=output_tokens,
-        estimated_cost=estimated_cost
+        estimated_cost=estimated_cost,
+        agent_type="ACADEMIC" if agent_type == "ACADEMIC" else "RAG"
         )
+    print(f"💾 Guardando → input={input_tokens} output={output_tokens} cost={estimated_cost} agent={agent_type}")
 
     db.add(log)
     db.commit()

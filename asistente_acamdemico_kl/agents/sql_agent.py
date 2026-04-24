@@ -73,14 +73,19 @@ ALL_VALID_COLUMNS = {col.lower() for cols in VALID_COLUMNS.values() for col in c
 # LLAMADA A GEMINI CON RETRY
 # ==============================
 
-def gemini_call(prompt: str, max_retries: int = 3) -> str:
+def gemini_call(prompt: str, max_retries: int = 3) -> tuple:
     for attempt in range(max_retries):
         try:
             response = client.models.generate_content(
                 model=GEMINI_MODEL,
                 contents=prompt
             )
-            return response.text.strip()
+            usage = response.usage_metadata
+            return (
+                response.text.strip(),
+                getattr(usage, "prompt_token_count", 0) or 0,
+                getattr(usage, "response_token_count", 0) or 0
+            )
         except Exception as e:
             error_str = str(e)
             if "429" in error_str or "RESOURCE_EXHAUSTED" in error_str:
@@ -421,7 +426,8 @@ def generate_sql(question: str, access_filter=None, history_context: str = "") -
         question=question,
         role_context=full_context
     )
-    raw = gemini_call(prompt)
+    raw, inp, out = gemini_call(prompt)
+    total_input, total_output = inp, out
 
     if "FUERA_DE_DOMINIO" in raw.upper():
         raise Exception("FUERA_DE_DOMINIO")
@@ -439,8 +445,10 @@ Revisa el DICCIONARIO y regenera usando ÚNICAMENTE columnas listadas.
 {role_context}
 PREGUNTA: {question}
 """
-        raw = gemini_call(retry_prompt)
+        raw, inp2, out2 = gemini_call(retry_prompt)
+        total_input += inp2
+        total_output += out2
         sql = clean_sql(raw)
         sql = validate_sql_security(sql)
 
-    return sql
+    return sql, total_input, total_output
