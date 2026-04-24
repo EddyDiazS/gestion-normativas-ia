@@ -553,7 +553,7 @@ RESPUESTA:
                 return "No se pudo generar una respuesta.", False, [], 0, 0, 0.0
 
             answer_text = response.text.strip()
-            print("Respuesta generada:", response.usage_metadata)
+            
 
             input_tokens = getattr (response.usage_metadata, "prompt_token_count", 0) or 0
             output_tokens = getattr (response.usage_metadata, "candidates_token_count", 0) or 0

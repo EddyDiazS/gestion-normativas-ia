@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
+from app.schemas import user
 from app.services.seed import run_seed
 
 from app.database import engine, Base, get_db
@@ -15,6 +16,8 @@ from app.models.query_log import QueryLog
 from app.models.activity_log import ActivityLog
 
 from app.core.roles import require_roles, UserRole
+from app.agents.orchestrator import classify_question
+from app.agents.academic_client import ask_academic_agent
 
 
 # Crear tablas
@@ -88,11 +91,24 @@ def ask(
         payload.top_k = 10
 
     # Ejecutar RAG
-    answer, verified, sources, input_tokens, output_tokens, estimated_cost = rag_engine.answer(
-        payload.question,
-        payload.top_k,
-        payload.session_id
-    )
+    agent_type = classify_question(payload.question)
+
+    if agent_type == "ACADEMIC":
+        answer = ask_academic_agent(
+            question   = payload.question,
+            role       = user.role,
+            faculty    = user.faculty,
+            program    = user.program,
+            user_id    = user.id,
+            session_id = payload.session_id,
+        )
+        verified = True
+        sources  = []
+        input_tokens, output_tokens, estimated_cost = 0, 0, 0.0
+    else:
+        answer, verified, sources, input_tokens, output_tokens, estimated_cost = rag_engine.answer(
+            payload.question, payload.top_k, payload.session_id
+        )
 
     # Guardar consulta en base de datos
     log = QueryLog(
