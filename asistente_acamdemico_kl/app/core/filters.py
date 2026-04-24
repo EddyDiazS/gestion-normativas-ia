@@ -66,10 +66,10 @@ def get_access_filter(role: str, faculty: Optional[str], program: Optional[str])
         if not programs:
             return _no_access(f"Facultad '{faculty}' no reconocida en el sistema")
 
-        programs_sql = ", ".join(f"'{p}'" for p in programs)
+        programs_upper = ", ".join(f"UPPER('{p}')" for p in programs)
 
         return AccessFilter(
-            sql_filter=f"AND p.nombre_programa IN ({programs_sql})",
+            sql_filter=f"AND UPPER(p.nombre_programa) IN ({programs_upper})",
             blocked_tables=[],
             description=f"Acceso a facultad '{faculty}': {', '.join(programs)}."
         )
@@ -78,7 +78,7 @@ def get_access_filter(role: str, faculty: Optional[str], program: Optional[str])
         if not program:
             return _no_access("Director sin programa asignado en su perfil")
         return AccessFilter(
-            sql_filter=f"AND p.nombre_programa = '{program}'",
+            sql_filter=f"AND UPPER(p.nombre_programa) = UPPER('{program}')",
             blocked_tables=[],
             description=(
                 f"Acceso limitado al programa '{program}'. "
@@ -90,7 +90,7 @@ def get_access_filter(role: str, faculty: Optional[str], program: Optional[str])
         if not program:
             return _no_access("Docente sin programa asignado en su perfil")
         return AccessFilter(
-            sql_filter=f"AND p.nombre_programa = '{program}'",
+            sql_filter=f"AND UPPER(p.nombre_programa) = UPPER('{program}')",
             blocked_tables=["informacion_financiera"],
             description=(
                 f"Acceso al programa '{program}'. "
