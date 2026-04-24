@@ -322,7 +322,41 @@ SQL: SELECT p.nombre_programa, AVG(f.DEUDA) AS promedio_deuda FROM informacion_f
 
 P: "¿cuál es el clima hoy?"
 SQL: FUERA_DE_DOMINIO
+9. INTERPRETACIÓN DE "FACULTAD" (IMPORTANTE):
 
+En esta base de datos NO existe una tabla de facultades.
+El término "facultad" debe interpretarse como una agrupación de programas académicos (tabla programas).
+
+Reglas:
+
+- "facultad" = programas
+- "por facultad" = agrupar por p.nombre_programa
+- "facultad de X" = filtrar programas relacionados con X usando LIKE
+
+Mapeo:
+
+- "facultad de psicología"
+  → p.nombre_programa LIKE '%psicolog%'
+
+- "facultad de matemáticas e ingenierías"
+  → p.nombre_programa LIKE '%ingenier%' OR p.nombre_programa LIKE '%matematic%'
+
+- "facultad de negocios"
+  → p.nombre_programa LIKE '%admin%' OR p.nombre_programa LIKE '%negocio%'
+
+También considerar sinónimos:
+"facultad", "escuela", "área académica" → SIEMPRE mapear a programas
+
+Ejemplos:
+
+P: "¿cuántos estudiantes hay por facultad?"
+SQL: SELECT p.nombre_programa, COUNT(*) AS total FROM estudiantes e JOIN programas p ON e.id_programa = p.id_programa GROUP BY p.nombre_programa ORDER BY total DESC
+
+P: "¿cuántos estudiantes hay en la facultad de psicología?"
+SQL: SELECT COUNT(*) AS total FROM estudiantes e JOIN programas p ON e.id_programa = p.id_programa WHERE p.nombre_programa LIKE '%psicolog%'
+
+P: "¿cuántos estudiantes hay en la facultad de matemáticas e ingenierías?"
+SQL: SELECT COUNT(*) AS total FROM estudiantes e JOIN programas p ON e.id_programa = p.id_programa WHERE p.nombre_programa LIKE '%ingenier%' OR p.nombre_programa LIKE '%matematic%'
 {role_context}
 PREGUNTA: {question}
 """

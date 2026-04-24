@@ -1,5 +1,6 @@
 from app.core.roles import UserRole
 from typing import Optional
+import unicodedata
 
 
 class AccessFilter:
@@ -9,11 +10,34 @@ class AccessFilter:
         self.description    = description
 
 
-# Mapa de facultades → programas (ajustar según la universidad)
+# ==============================
+# NORMALIZAR TEXTO
+# ==============================
+
+def normalize(text: str) -> str:
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', text)
+        if unicodedata.category(c) != 'Mn'
+    ).lower()
+
+
+# ==============================
+# Mapa REAL de facultades → programas
+# ==============================
+
 FACULTY_PROGRAMS = {
-    "ingenieria":        ["Ingeniería de sistemas", "Ingeniería industrial", "Matemáticas"],
-    "ciencias economicas": ["Administración de negocios internacionales", "Marketing"],
-    "ciencias sociales": ["Psicología"],
+    "matematicas e ingenierias": [
+        "Ingeniería de sistemas",
+        "Ingeniería industrial",
+        "Matemáticas"
+    ],
+    "psicologia": [
+        "Psicología"
+    ],
+    "negocios": [
+        "Administración de negocios internacionales",
+        "Marketing"
+    ],
 }
 
 
@@ -30,10 +54,20 @@ def get_access_filter(role: str, faculty: Optional[str], program: Optional[str])
     if role == UserRole.DECANO:
         if not faculty:
             return _no_access("Decano sin facultad asignada en su perfil")
-        programs = FACULTY_PROGRAMS.get(faculty.lower().strip())
+
+        faculty_input = normalize(faculty)
+
+        programs = None
+        for key in FACULTY_PROGRAMS:
+            if normalize(key) in faculty_input:
+                programs = FACULTY_PROGRAMS[key]
+                break
+
         if not programs:
             return _no_access(f"Facultad '{faculty}' no reconocida en el sistema")
+
         programs_sql = ", ".join(f"'{p}'" for p in programs)
+
         return AccessFilter(
             sql_filter=f"AND p.nombre_programa IN ({programs_sql})",
             blocked_tables=[],
@@ -46,7 +80,10 @@ def get_access_filter(role: str, faculty: Optional[str], program: Optional[str])
         return AccessFilter(
             sql_filter=f"AND p.nombre_programa = '{program}'",
             blocked_tables=[],
-            description=f"Acceso limitado al programa '{program}'."
+            description=(
+                f"Acceso limitado al programa '{program}'. "
+                "Si preguntas por 'mi facultad', se interpretará como tu programa."
+            )
         )
 
     if role == UserRole.DOCENTE:
