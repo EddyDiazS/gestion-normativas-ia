@@ -1,19 +1,17 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { sendQuestion } from "../services/api";
+import { sendQuestion, getChatHistory, getChatSessions } from "../services/api";
 import { useRouter } from "next/navigation";
 import Message from "../services/message";
 import Input from "./input";
 
+
 function Chat() {
   const router = useRouter();
 
-  const [chats, setChats] = useState([
-    { id: 1, title: "Nuevo chat", messages: [] }
-  ]);
-
-  const [activeChatId, setActiveChatId] = useState(1);
+  const [chats, setChats] = useState([]);
+  const [activeChatId, setActiveChatId] = useState(null);
   const [loading, setLoading] = useState(false);
 
   const messagesEndRef = useRef(null);
@@ -22,13 +20,47 @@ function Chat() {
   //  Verificar autenticación
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) router.push("/login");
+    if (!token) { router.push("/login"); return; }
+    getChatSessions().then(sessions => {
+      if (sessions.length === 0) {
+        const newChat = { id: Date.now(), title: "Nuevo chat", messages: [], session_id: crypto.randomUUID() };
+        setChats([newChat]);
+        setActiveChatId(newChat.id);
+        return;
+      }
+      const loaded = sessions.map((s, i) => ({
+        id: i + 1, title: s.title, messages: [], session_id: s.session_id
+      }));
+      setChats(loaded);
+      setActiveChatId(loaded[0].id);
+    });
   }, [router]);
 
   //  Scroll automático
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeChat?.messages]);
+
+  useEffect(() => {
+    if (!activeChatId || chats.length === 0) return;
+    const chat = chats.find(c => c.id === activeChatId);
+    if (!chat?.session_id) return;
+    if (chat.messages.length > 0) return; // ya cargado, no recargar
+
+    getChatHistory(chat.session_id).then(msgs => {
+      if (!Array.isArray(msgs) || msgs.length === 0) return;
+      setChats(prev => prev.map(c => c.id !== activeChatId ? c : {
+        ...c,
+        messages: msgs.map(m => ({ type: m.role === "user" ? "user" : "bot", text: m.content }))
+      }));
+    });
+  }, [activeChatId, chats.length]);
+
+// Obtiene el session_id del chat activo (UUID único por conversación), o genera uno nuevo si no existe (para nuevos chats)
+  const getSessionId = (chatId) => {
+    const chat = chats.find(c => c.id === chatId);
+    return chat?.session_id || crypto.randomUUID();
+  };
 
   // Enviar pregunta
   const handleSend = async (text) => {
@@ -48,7 +80,7 @@ function Chat() {
     setLoading(true);
 
     try {
-      const data = await sendQuestion(text);
+      const data = await sendQuestion(text, getSessionId(activeChatId));
 
       setChats(updatedChats.map(chat => {
         if (chat.id !== activeChatId) return chat;
@@ -72,9 +104,9 @@ function Chat() {
     setLoading(false);
   };
 
-  //  Nuevo chat
+  //  Crea un nuevo chat vacío con session_id único para que aparezca en el sidebar
   const createNewChat = () => {
-    const newChat = { id: Date.now(), title: "Nuevo chat", messages: [] };
+    const newChat = { id: Date.now(), title: "Nuevo chat", messages: [], session_id: crypto.randomUUID() };
     setChats([newChat, ...chats]);
     setActiveChatId(newChat.id);
   };
