@@ -3,15 +3,21 @@
 import { useState, useEffect, useRef } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
+import Image from "next/image";
 
 export default function MenuPanel() {
 
   const [role, setRole] = useState(null)
   const [username, setUsername] = useState("")
   const [openDropdown, setOpenDropdown] = useState(false)
-  const router   = useRouter()
+  const router = useRouter()
   const pathname = usePathname()
-  const dropRef  = useRef(null)
+  const dropRef = useRef(null)
+  const [darkMode, setDarkMode] = useState(false);
+
+  useEffect(() => {
+    setDarkMode(document.documentElement.classList.contains("dark"));
+  }, []);
 
   useEffect(() => {
     const stored = localStorage.getItem("user")
@@ -41,12 +47,12 @@ export default function MenuPanel() {
   // Construir links de gestión según rol
   const adminLinks = []
   if (role === "ADMINISTRADOR" || role === "RECTOR") {
-    adminLinks.push({ path: "/usuarios",  label: "Usuarios",  icon: "👥" })
+    adminLinks.push({ path: "/usuarios", label: "Usuarios", icon: "👥" })
     adminLinks.push({ path: "/gastos", label: "Gastos de ChatBot", icon: "💰" })
   }
-  
-  if (["ADMINISTRADOR","RECTOR","DECANO","DIRECTOR"].includes(role)) {
-    adminLinks.push({ path: "/reportes", label: "Reportes",  icon: "📊" })
+
+  if (["ADMINISTRADOR", "RECTOR", "DECANO", "DIRECTOR"].includes(role)) {
+    adminLinks.push({ path: "/reportes", label: "Reportes", icon: "📊" })
   }
 
   const isAdminChildActive = adminLinks.some(l => pathname === l.path)
@@ -57,8 +63,16 @@ export default function MenuPanel() {
 
         {/* Brand */}
         <Link href="/chat" className="nav-brand">
-          <div className="nav-brand-icon">📚</div>
-          <span>Gestión y Consulta de Normativas con IA</span>
+
+          <Image
+            src="/favicon.ico"
+            alt="Logo Konrad Lorenz"
+            width={40}
+            height={40}
+
+          />
+
+          <span>Konrad Lorenz: 1000 Días con IA</span>
         </Link>
 
         {/* Links */}
@@ -143,6 +157,19 @@ export default function MenuPanel() {
           <button onClick={logout} className="nav-logout-btn">
             <span>🚪</span>
             <span className="hidden sm:inline">Salir</span>
+          </button>
+
+          <button
+            onClick={() => {
+              const newMode = !darkMode;
+              setDarkMode(newMode);
+              document.documentElement.classList.toggle("dark", newMode);
+              localStorage.setItem("theme", newMode ? "dark" : "light");
+            }}
+            className="nav-logout-btn"
+            style={{ fontSize: 16 }}
+          >
+            {darkMode ? "☀️ Claro" : "🌙 Oscuro"}
           </button>
         </div>
 

@@ -3,8 +3,8 @@ import "./globals.css";
 import { AuthProvider } from "../src/context/authcontext"
 
 export const metadata: Metadata = {
-  title: "RAG Normativas",
-  description: "Sistema de consulta de normativas institucionales",
+  title: "Konrad Lorenz: 1000 Días con IA",
+  description: "Sistema de consulta de normativas institucionales e informacion academica ",
 };
 
 export default function RootLayout({

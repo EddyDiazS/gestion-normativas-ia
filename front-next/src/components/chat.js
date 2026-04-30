@@ -155,7 +155,7 @@ function Chat() {
       <div className="chat-main">
 
         <div className="chat-header">
-          Chat IA Normativas
+          Chat IA Normativas y Dudas Academicas
         </div>
 
         <div className="messages">
