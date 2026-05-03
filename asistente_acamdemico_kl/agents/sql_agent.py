@@ -7,9 +7,9 @@ import time
 # CONFIGURACIÓN GEMINI
 # ==============================
 
-api_key = os.getenv("GEMINI_API_KEY")
+api_key = os.getenv("GOOGLE_API_KEY")
 if not api_key:
-    raise ValueError("❌ GEMINI_API_KEY no encontrada en variables de entorno")
+    raise ValueError("❌ GOOGLE_API_KEY no encontrada en variables de entorno")
 
 client = genai.Client(api_key=api_key)
 GEMINI_MODEL = "gemini-2.5-flash"
@@ -176,7 +176,8 @@ def verify_sql_columns(sql: str) -> list:
 # PROMPT DE GENERACIÓN SQL
 # ==============================
 
-SQL_GENERATION_PROMPT = """Eres un experto en SQL MySQL para sistemas académicos universitarios.
+SQL_GENERATION_PROMPT = """Eres un experto en SQL Oracle para sistemas académicos universitarios.
+
 
 Tu tarea tiene DOS pasos:
 
@@ -328,6 +329,11 @@ SQL: SELECT p.nombre_programa, AVG(f.DEUDA) AS promedio_deuda FROM informacion_f
 P: "¿cuál es el clima hoy?"
 SQL: FUERA_DE_DOMINIO
 9. INTERPRETACIÓN DE "FACULTAD" (IMPORTANTE):
+
+   - NUNCA uses AS para alias de tablas. Correcto: FROM estudiantes e  Incorrecto: FROM estudiantes AS e
+   - NUNCA uses LIMIT. Para limitar filas usa: WHERE ROWNUM <= N
+   - NUNCA uses comillas dobles para strings, usa comillas simples.
+   - Usa SYSDATE para fecha actual, no NOW() ni CURRENT_DATE.
 
 En esta base de datos NO existe una tabla de facultades.
 El término "facultad" debe interpretarse como una agrupación de programas académicos (tabla programas).

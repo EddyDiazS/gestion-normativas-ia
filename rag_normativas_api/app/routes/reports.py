@@ -26,16 +26,42 @@ def get_faculty_queries(
         UserRole.ADMINISTRADOR,
         UserRole.DECANO,
         UserRole.DIRECTOR,
+        UserRole.DOCENTE
     ))
 ):
-    if user.role in (UserRole.RECTOR.value, UserRole.ADMINISTRADOR.value):
-        queries = db.query(QueryLog).all()
-    else:
-        queries = db.query(QueryLog).filter(
-            QueryLog.faculty == user.faculty
-        ).all()
+    base = db.query(QueryLog, User).join(User, QueryLog.user_id == User.id, isouter=True)
 
-    return queries
+    if user.role in (UserRole.RECTOR.value, UserRole.ADMINISTRADOR.value):
+            results = base.order_by(QueryLog.created_at.desc()).all()
+
+    elif user.role == UserRole.DECANO.value:
+            results = base.filter(QueryLog.faculty == user.faculty)\
+                        .order_by(QueryLog.created_at.desc()).all()
+
+    elif user.role in (UserRole.DIRECTOR.value, UserRole.DOCENTE.value):
+            results = base.join(User, QueryLog.user_id == User.id, isouter=True)\
+                        .filter(User.program == user.program)\
+                        .order_by(QueryLog.created_at.desc()).all()
+    else:
+            results = []
+
+    return [
+            {
+                "id":         row[0].id,
+                "user_id":    row[0].user_id,
+                "username":   row[1].username if row[1] else "—",
+                "faculty":    row[1].faculty  if row[1] else "—",
+                "program":    row[1].program  if row[1] else "—",
+                "role":       row[1].role     if row[1] else "—",
+                "question":   row[0].question,
+                "answer":     row[0].answer,
+                "agent_type": row[0].agent_type,
+                "created_at": row[0].created_at.isoformat() if row[0].created_at else None,
+            }
+            for row in results
+        ]
+
+
 @router.get("/activity_logs")
 def get_activity_logs(
     db: Session = Depends(get_db),

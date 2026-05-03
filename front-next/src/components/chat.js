@@ -56,13 +56,29 @@ function Chat() {
     });
   }, [activeChatId, chats.length]);
 
-// Obtiene el session_id del chat activo (UUID único por conversación), o genera uno nuevo si no existe (para nuevos chats)
+  // Obtiene el session_id del chat activo (UUID único por conversación), o genera uno nuevo si no existe (para nuevos chats)
   const getSessionId = (chatId) => {
     const chat = chats.find(c => c.id === chatId);
     return chat?.session_id || crypto.randomUUID();
   };
 
   // Enviar pregunta
+  const typeMessage = (text, chatId, currentChats) => {
+    const words = text.split(" ")
+    let current = ""
+    words.forEach((word, i) => {
+      setTimeout(() => {
+        current += (i === 0 ? "" : " ") + word
+        setChats(prev => prev.map(chat => {
+          if (chat.id !== chatId) return chat
+          const msgs = [...chat.messages]
+          msgs[msgs.length - 1] = { type: "bot", text: current }
+          return { ...chat, messages: msgs }
+        }))
+      }, i * 30) // 30ms por palabra
+    })
+  }
+
   const handleSend = async (text) => {
     if (!text.trim()) return;
 
@@ -82,10 +98,16 @@ function Chat() {
     try {
       const data = await sendQuestion(text, getSessionId(activeChatId));
 
-      setChats(updatedChats.map(chat => {
-        if (chat.id !== activeChatId) return chat;
-        return { ...chat, messages: [...chat.messages, { type: "bot", text: data.answer }] };
-      }));
+      const withEmpty = updatedChats.map(chat => {
+        if (chat.id !== activeChatId) return chat
+        return { ...chat, messages: [...chat.messages, { type: "bot", text: "" }] }
+      })
+      setChats(withEmpty)
+      setLoading(false)
+
+      // Luego escribe palabra por palabra
+      typeMessage(data.answer, activeChatId, withEmpty)
+      return
     } catch (error) {
       console.error(error);
 
@@ -99,9 +121,8 @@ function Chat() {
         if (chat.id !== activeChatId) return chat;
         return { ...chat, messages: [...chat.messages, { type: "bot", text: "Error consultando la API." }] };
       }));
+          setLoading(false);
     }
-
-    setLoading(false);
   };
 
   //  Crea un nuevo chat vacío con session_id único para que aparezca en el sidebar

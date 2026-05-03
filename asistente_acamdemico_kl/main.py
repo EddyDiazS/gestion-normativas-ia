@@ -1,14 +1,22 @@
 from fastapi import FastAPI, HTTPException
+
+import os
 from dotenv import load_dotenv
 
-load_dotenv()
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+APP_ENV = os.getenv("APP_ENV", "local")
+
+if APP_ENV == "production":
+    load_dotenv(os.path.join(BASE_DIR, ".env.prod"), override=True)
+else:
+    load_dotenv(os.path.join(BASE_DIR, ".env"), override=True)
 
 from pydantic import BaseModel
 from typing import Optional
 from agents.sql_agent import generate_sql
 from agents.response_agent import generate_response, OUT_OF_SCOPE_RESPONSE
 from database.execute_query import run_query
-from app.core.filters import get_access_filter
+from app.core.filters import get_access_filter, AccessFilter
 from app.core.roles import UserRole
 import uuid
 
@@ -97,7 +105,10 @@ def ask_agent(request: Question):
     # Estudiante solo ve sus propios datos
     question_for_sql = question
     if role == UserRole.ESTUDIANTE and user_id != "anonimo":
-        question_for_sql = f"{question} (filtrar solo para el estudiante con codigo {user_id})"
+        forced_filter = f"AND e.Codigo_Estudiante = {user_id}"
+        access_filter.sql_filter = forced_filter
+        access_filter.description = f"Acceso solo al estudiante con código {user_id}"
+        question_for_sql = question 
 
     try:
         sql , sql_inp, sql_out= generate_sql(
@@ -142,7 +153,7 @@ def ask_agent(request: Question):
         raise HTTPException(status_code=500, detail=f"Error ejecutando consulta: {str(e)}")
 
     # Acceso denegado por filtro de rol (resultado vacío)
-    if access_filter.sql_filter and access_filter.sql_filter != "":
+    if role != UserRole.ESTUDIANTE and access_filter.sql_filter and access_filter.sql_filter != "":
         resultado_vacio = (
             not data or
             (len(data) == 1 and len(data[0]) == 1 and data[0][0] == 0)
@@ -158,8 +169,8 @@ def ask_agent(request: Question):
                 "role":       role
             }
 
-    # Estudiante preguntando por datos que no son suyos
-    if role == "ESTUDIANTE":
+    # Estudiante intentando ver datos de otro estudiante
+    if role == UserRole.ESTUDIANTE:
         resultado_vacio = (
             not data or
             (len(data) == 1 and len(data[0]) == 1 and data[0][0] == 0)
@@ -239,6 +250,7 @@ def get_stats(
     role = role.upper()
     access_filter = get_access_filter(role, faculty, program)
     f = access_filter.sql_filter
+    
 
     join_prog        = "JOIN estudiantes e ON rd.Codigo_Estudiante = e.Codigo_Estudiante JOIN programas p ON e.id_programa = p.id_programa"
     join_prog_simple = "JOIN programas p ON e.id_programa = p.id_programa"

@@ -15,7 +15,9 @@ from app.models.chat_message import ChatMessage
 from app.core.roles import require_roles, UserRole
 from app.agents.orchestrator import classify_question
 from app.agents.academic_client import ask_academic_agent
+from app.routes.admin_import import router as import_router
 
+                
 
 # Crear tablas
 try:
@@ -34,6 +36,7 @@ except Exception as e:
                 print(f"✅ Tabla creada: {table.name}")
             except Exception as te:
                 print(f"❌ No se pudo crear {table.name}: {te}")
+
         else:
             print(f"ℹ️  Ya existe: {table.name}")
 run_seed()
@@ -51,6 +54,7 @@ app = FastAPI(title="RAG Normativas API")
 app.include_router(users.router)
 app.include_router(auth.router)
 app.include_router(reports.router)
+app.include_router(import_router)
 
 # CORS
 app.add_middleware(
@@ -119,7 +123,7 @@ def ask(
             role       = user.role,
             faculty    = user.faculty,
             program    = user.program,
-            user_id    = user.id,
+            user_id    = user.cedula or user.username,
             session_id = payload.session_id,
         )
         verified = True
@@ -133,8 +137,8 @@ def ask(
     log = QueryLog(
         user_id=user.id,
         faculty=user.faculty,
-        question=payload.question,
-        answer=answer,
+        question=payload.question[:1900],
+        answer=answer[:7900],
         input_tokens=input_tokens,
         output_tokens=output_tokens,
         estimated_cost=estimated_cost,

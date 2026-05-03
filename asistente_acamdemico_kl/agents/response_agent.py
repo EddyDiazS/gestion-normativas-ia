@@ -3,9 +3,9 @@ import os
 import re
 import time
 
-api_key = os.getenv("GEMINI_API_KEY")
+api_key = os.getenv("GOOGLE_API_KEY")
 if not api_key:
-    raise ValueError("❌ GEMINI_API_KEY no encontrada")
+    raise ValueError("❌ GOOGLE_API_KEY no encontrada")
 
 client = genai.Client(api_key=api_key)
 GEMINI_MODEL = "gemini-2.5-flash"

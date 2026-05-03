@@ -2,15 +2,17 @@
 
 import { useEffect, useState, useMemo } from "react"
 
+
 const ROLES = ["ESTUDIANTE", "ADMINISTRADOR", "RECTOR", "DECANO", "DIRECTOR"]
 
 const facultades_programas = {
-  "Facultad de Matemáticas e Ingenierías": ["Ingeniería de Sistemas", "Ingeniería Industrial", "Matematicas"],
-  "Escuela de Negocios": ["Administración de Negocios Internacionales", "Mercadeo"],
+  "Facultad de Matemáticas e Ingenierías": ["Ingeniería de Sistemas", "Ingeniería Industrial", "Matemáticas"],
+  "Escuela de Negocios": ["Administración de negocios internacionales", "Marketing"],
   "Facultad de Psicología": ["Psicología"],
   "Escuela de Posgrados": ["Posgrado"],
 }
 const facultades = Object.keys(facultades_programas)
+
 
 function getRoleBadgeClass(role) {
   switch (role) {
@@ -39,6 +41,8 @@ export default function AdminPanel() {
   const [formData, setFormData] = useState({})
   const [showPassword, setShowPassword] = useState(false)
   const [loadingAction, setLoadingAction] = useState(false)
+  const [cedulaError, setCedulaError] = useState("")
+  const [importing, setImporting] = useState(false)
 
   // ── Filtros ──
   const [filterId, setFilterId] = useState("")
@@ -83,6 +87,24 @@ export default function AdminPanel() {
   const facultyOptions = useMemo(() => [...new Set(users.map(u => u.faculty).filter(Boolean))], [users])
   const programOptions = useMemo(() => [...new Set(users.map(u => u.program).filter(Boolean))], [users])
 
+  const handleImport = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    setImporting(true)
+    const token = localStorage.getItem("token")
+    const formData = new FormData()
+    formData.append("file", file)
+    const res = await fetch("http://127.0.0.1:8000/admin/import-estudiantes", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: formData
+    })
+    const data = await res.json()
+    setImporting(false)
+    alert(`✅ Insertados: ${data.insertados} | Omitidos: ${data.omitidos} | Usuarios creados: ${data.usuarios_creados}${data.errores.length ? '\n⚠️ Errores: ' + data.errores.join('\n') : ''}`)
+    fetchUsers()
+  }
+
   const handleEditClick = (user) => {
     setEditingUser(user.id)
     setShowPassword(false)
@@ -114,8 +136,15 @@ export default function AdminPanel() {
     })
 
     setLoadingAction(false)
-    if (res.ok) { fetchUsers(); setEditingUser(null) }
-    else alert("Error actualizando usuario.")
+    if (res.ok) {
+      setCedulaError("")
+      fetchUsers()
+      setEditingUser(null)
+    } else {
+      const data = await res.json()
+      if (data.detail?.includes("cédula")) setCedulaError(data.detail)
+      else alert("Error actualizando usuario.")
+    }
   }
 
   const handleCreateClick = () => {
@@ -129,6 +158,7 @@ export default function AdminPanel() {
     setLoadingAction(true)
     const token = localStorage.getItem("token")
 
+
     const bodyData = { ...formData }
     if (bodyData.faculty === "") bodyData.faculty = null
     if (bodyData.program === "") bodyData.program = null
@@ -141,8 +171,15 @@ export default function AdminPanel() {
     })
 
     setLoadingAction(false)
-    if (res.ok) { fetchUsers(); setCreatingUser(false) }
-    else alert("Error creando usuario.")
+    if (res.ok) {
+      setCedulaError("")
+      fetchUsers()
+      setCreatingUser(false)
+    } else {
+      const data = await res.json()
+      if (data.detail?.includes("cédula")) setCedulaError(data.detail)
+      else alert("Error creando usuario.")
+    }
   }
 
   const handleDelete = async (userId, username) => {
@@ -192,10 +229,24 @@ export default function AdminPanel() {
             {hasActiveFilters && <span style={{ color: "var(--accent)", marginLeft: 6 }}>· filtrado</span>}
           </p>
         </div>
-        <button onClick={handleCreateClick} className="btn-create">
-          <span>＋</span>
-          <span>Crear Usuario</span>
-        </button>
+        <div style={{ display: "flex", gap: 12 }}>
+          <label style={{
+            padding: "10px 20px",
+            background: "var(--bg-3)",
+            border: "1px solid var(--border)",
+            borderRadius: "var(--radius-md)",
+            cursor: importing ? "not-allowed" : "pointer",
+            fontSize: 14, fontWeight: 600,
+            color: "var(--text-1)"
+          }}>
+            {importing ? "Importando..." : " Importar Datos (Excel)"}
+            <input type="file" accept=".xlsx" onChange={handleImport} style={{ display: "none" }} />
+          </label>
+          <button onClick={handleCreateClick} className="btn-create">
+            <span>＋</span>
+            <span>Crear Usuario</span>
+          </button>
+        </div>
       </div>
 
       {/* ── Barra de filtros ── */}
@@ -399,6 +450,7 @@ export default function AdminPanel() {
               <Field label="Cedula">
                 <input type="text" value={formData.cedula} onChange={e => set("cedula", e.target.value)}
                   className="form-input" placeholder="Ej: 100000001" />
+                {cedulaError && <p style={{ color: "var(--red)", fontSize: 12, marginTop: 4 }}>{cedulaError}</p>}
               </Field>
               <div className="modal-actions">
                 <button type="button" onClick={() => setEditingUser(null)} className="btn-cancel">Cancelar</button>
@@ -443,7 +495,8 @@ export default function AdminPanel() {
                   </Field>
                   <Field label="Cedula">
                     <input type="text" value={formData.cedula} onChange={e => set("cedula", e.target.value)}
-                      className="form-input-green" placeholder="Ej: 100000001 " />
+                      className="form-input" placeholder="Ej: 100000001 " />
+                    {cedulaError && <p style={{ color: "var(--red)", fontSize: 12, marginTop: 4 }}>{cedulaError}</p>}
                   </Field>
                 </div>
                 <div className="form-grid-2">

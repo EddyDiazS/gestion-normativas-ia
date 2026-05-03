@@ -9,7 +9,6 @@ class AccessFilter:
         self.blocked_tables = blocked_tables
         self.description    = description
 
-
 # ==============================
 # NORMALIZAR TEXTO
 # ==============================
@@ -26,15 +25,15 @@ def normalize(text: str) -> str:
 # ==============================
 
 FACULTY_PROGRAMS = {
-    "matematicas e ingenierias": [
-        "Ingeniería de sistemas",
-        "Ingeniería industrial",
+    "facultad de matematicas e ingenierias": [
+        "Ingeniería de Sistemas",
+        "Ingeniería Industrial",
         "Matemáticas"
     ],
-    "psicologia": [
+    "facultad de psicologia": [
         "Psicología"
     ],
-    "negocios": [
+    "escuela de negocios": [
         "Administración de negocios internacionales",
         "Marketing"
     ],

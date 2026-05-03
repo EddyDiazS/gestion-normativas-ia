@@ -4,6 +4,7 @@
 .env.local
 .env.prod
 .env.*.local
+!.env.example
 
 # BACKEND — rag_normativas_api/
 rag_normativas_api/__pycache__/

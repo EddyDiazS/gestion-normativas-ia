@@ -5,7 +5,6 @@ import { useEffect, useState, useMemo } from "react"
 export default function ReportsPanel() {
 
   const [queries, setQueries] = useState([])
-  const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
 
   const [activeTab, setActiveTab] = useState("consultas")
@@ -13,7 +12,6 @@ export default function ReportsPanel() {
   const [role, setRole] = useState(null)
   const [filterActivity, setFilterActivity] = useState("")
 
-  // ── Filtros ──
   const [filterFaculty, setFilterFaculty] = useState("")
   const [filterProgram, setFilterProgram] = useState("")
   const [filterDateFrom, setFilterDateFrom] = useState("")
@@ -26,18 +24,11 @@ export default function ReportsPanel() {
 
     const fetchAll = async () => {
       try {
-        const [resQ, resU] = await Promise.all([
-          fetch("http://127.0.0.1:8000/reports/faculty_queries", {
-            headers: { Authorization: `Bearer ${token}` }
-          }),
-          fetch("http://127.0.0.1:8000/users", {
-            headers: { Authorization: `Bearer ${token}` }
-          })
-        ])
+        const resQ = await fetch("http://127.0.0.1:8000/reports/faculty_queries", {
+          headers: { Authorization: `Bearer ${token}` }
+        })
         const dataQ = await resQ.json()
-        const dataU = await resU.json()
         setQueries(Array.isArray(dataQ) ? dataQ : [])
-        setUsers(Array.isArray(dataU) ? dataU : [])
 
         const parsedRole = stored ? JSON.parse(stored).role : null
         if (parsedRole === "ADMINISTRADOR" || parsedRole === "RECTOR") {
@@ -47,10 +38,8 @@ export default function ReportsPanel() {
           const dataA = await resA.json()
           setActivity(Array.isArray(dataA) ? dataA : [])
         }
-
       } catch {
         setQueries([])
-        setUsers([])
         setActivity([])
       }
       setLoading(false)
@@ -58,16 +47,10 @@ export default function ReportsPanel() {
     fetchAll()
   }, [])
 
-  const userMap = useMemo(() => {
-    const map = {}
-    users.forEach(u => { map[u.id] = u })
-    return map
-  }, [users])
-
   const facultyOptions = useMemo(() =>
-    [...new Set(users.map(u => u.faculty).filter(Boolean))], [users])
+    [...new Set(queries.map(q => q.faculty).filter(Boolean))], [queries])
   const programOptions = useMemo(() =>
-    [...new Set(users.map(u => u.program).filter(Boolean))], [users])
+    [...new Set(queries.map(q => q.program).filter(Boolean))], [queries])
 
   const filteredActivity = useMemo(() => {
     if (!filterActivity) return activity
@@ -83,9 +66,8 @@ export default function ReportsPanel() {
 
   const filteredQueries = useMemo(() => {
     return queries.filter(q => {
-      const user = userMap[q.user_id]
-      if (filterFaculty && (user?.faculty || "") !== filterFaculty) return false
-      if (filterProgram && (user?.program || "") !== filterProgram) return false
+      if (filterFaculty && q.faculty !== filterFaculty) return false
+      if (filterProgram && q.program !== filterProgram) return false
       if (filterDateFrom && q.created_at) {
         const from = new Date(filterDateFrom)
         from.setHours(0, 0, 0, 0)
@@ -98,7 +80,7 @@ export default function ReportsPanel() {
       }
       return true
     })
-  }, [queries, userMap, filterFaculty, filterProgram, filterDateFrom, filterDateTo])
+  }, [queries, filterFaculty, filterProgram, filterDateFrom, filterDateTo])
 
   const hasActiveFilters = filterFaculty || filterProgram || filterDateFrom || filterDateTo
 
@@ -112,7 +94,6 @@ export default function ReportsPanel() {
   return (
     <div className="reports-container">
 
-      {/* Header */}
       <div className="reports-header">
         <h1 className="reports-title">Reportes</h1>
         <p className="reports-subtitle">
@@ -127,7 +108,6 @@ export default function ReportsPanel() {
         </p>
       </div>
 
-      {/* Pestañas */}
       {canSeeActivity && (
         <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
           {[
@@ -151,7 +131,6 @@ export default function ReportsPanel() {
         </div>
       )}
 
-      {/* Contenido */}
       {loading ? (
         <div className="report-empty-state">
           <div className="loading-spinner" />
@@ -160,7 +139,6 @@ export default function ReportsPanel() {
 
       ) : activeTab === "actividad" ? (
         <>
-          {/* Filtro actividad */}
           <div style={{
             background: "var(--bg-2)", border: "1px solid var(--border)",
             borderRadius: "var(--radius-lg)", padding: "16px 20px",
@@ -182,7 +160,6 @@ export default function ReportsPanel() {
             )}
           </div>
 
-          {/* Lista actividad */}
           {filteredActivity.length > 0 ? (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {filteredActivity.map((a) => (
@@ -232,7 +209,6 @@ export default function ReportsPanel() {
 
       ) : (
         <>
-          {/* Stats */}
           {filteredQueries.length > 0 && (
             <div className="stats-grid">
               <div className="stat-card">
@@ -248,14 +224,13 @@ export default function ReportsPanel() {
               <div className="stat-card">
                 <div className="stat-icon">🏛️</div>
                 <div className="stat-value">
-                  {new Set(filteredQueries.map(q => userMap[q.user_id]?.faculty).filter(Boolean)).size}
+                  {new Set(filteredQueries.map(q => q.faculty).filter(Boolean)).size}
                 </div>
                 <div className="stat-label">Facultades</div>
               </div>
             </div>
           )}
 
-          {/* Filtros consultas */}
           <div style={{
             background: "var(--bg-2)", border: "1px solid var(--border)",
             borderRadius: "var(--radius-lg)", padding: "16px 20px",
@@ -319,67 +294,63 @@ export default function ReportsPanel() {
             )}
           </div>
 
-          {/* Cards consultas */}
           {filteredQueries.length > 0 ? (
             <div className="reports-grid">
-              {filteredQueries.map((q) => {
-                const user = userMap[q.user_id]
-                return (
-                  <div key={q.id} className="report-card">
-                    <div>
-                      <p className="report-question-label">Pregunta</p>
-                      <p className="report-question-text">"{q.question}"</p>
-                    </div>
-                    {q.answer && (
-                      <div style={{ marginTop: 10 }}>
-                        <p className="report-question-label">Respuesta del ChatBot</p>
-                        <p style={{
-                          fontSize: 13,
-                          color: "var(--text-2)",
-                          lineHeight: 1.6,
-                          background: "var(--surface)",
-                          border: "1px solid var(--border)",
-                          borderRadius: "var(--radius-md)",
-                          padding: "10px 14px",
-                          maxHeight: 120,
-                          overflowY: "auto",
-                          margin: 0
-                        }}>{q.answer}</p>
-                      </div>
-                    )}
-                    <div style={{
-                      display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10,
-                      paddingTop: 12, borderTop: "1px solid var(--border)"
-                    }}>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                        <span className="report-user-label">ID</span>
-                        <span className="report-user-value" style={{ fontFamily: "monospace" }}>#{q.user_id}</span>
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                        <span className="report-user-label">Usuario</span>
-                        <span className="report-user-value">{user?.username || "—"}</span>
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                        <span className="report-user-label">Facultad</span>
-                        <span className="report-user-value" style={{ fontSize: 12 }}>{user?.faculty || "—"}</span>
-                      </div>
-                      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                        <span className="report-user-label">Programa</span>
-                        <span className="report-user-value" style={{ fontSize: 12 }}>{user?.program || "—"}</span>
-                      </div>
-                    </div>
-                    {q.created_at && (
-                      <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: 8 }}>
-                        <span style={{ fontSize: 11, color: "var(--text-3)" }}>
-                          🕐 {new Date(q.created_at).toLocaleDateString("es-CO", {
-                            day: "2-digit", month: "short", year: "numeric"
-                          })}
-                        </span>
-                      </div>
-                    )}
+              {filteredQueries.map((q) => (
+                <div key={q.id} className="report-card">
+                  <div>
+                    <p className="report-question-label">Pregunta</p>
+                    <p className="report-question-text">"{q.question}"</p>
                   </div>
-                )
-              })}
+                  {q.answer && (
+                    <div style={{ marginTop: 10 }}>
+                      <p className="report-question-label">Respuesta del ChatBot</p>
+                      <p style={{
+                        fontSize: 13,
+                        color: "var(--text-2)",
+                        lineHeight: 1.6,
+                        background: "var(--surface)",
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius-md)",
+                        padding: "10px 14px",
+                        maxHeight: 120,
+                        overflowY: "auto",
+                        margin: 0
+                      }}>{q.answer}</p>
+                    </div>
+                  )}
+                  <div style={{
+                    display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10,
+                    paddingTop: 12, borderTop: "1px solid var(--border)"
+                  }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <span className="report-user-label">ID</span>
+                      <span className="report-user-value" style={{ fontFamily: "monospace" }}>#{q.user_id}</span>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <span className="report-user-label">Usuario</span>
+                      <span className="report-user-value">{q.username || "—"}</span>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <span className="report-user-label">Facultad</span>
+                      <span className="report-user-value" style={{ fontSize: 12 }}>{q.faculty || "—"}</span>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      <span className="report-user-label">Programa</span>
+                      <span className="report-user-value" style={{ fontSize: 12 }}>{q.program || "—"}</span>
+                    </div>
+                  </div>
+                  {q.created_at && (
+                    <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: 8 }}>
+                      <span style={{ fontSize: 11, color: "var(--text-3)" }}>
+                        🕐 {new Date(q.created_at).toLocaleDateString("es-CO", {
+                          day: "2-digit", month: "short", year: "numeric"
+                        })}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           ) : (
             <div className="report-empty-state">
