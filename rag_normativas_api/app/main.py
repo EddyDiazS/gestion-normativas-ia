@@ -42,12 +42,15 @@ except Exception as e:
 run_seed()
 
 from sqlalchemy import text, inspect as sa_inspect
-with engine.connect() as conn:
-    inspector = sa_inspect(engine)
-    cols = [c["name"].lower() for c in inspector.get_columns("query_logs")]
-    if "agent_type" not in cols:
-        conn.execute(text("ALTER TABLE query_logs ADD agent_type VARCHAR2(20) DEFAULT 'RAG'"))
-        conn.commit()
+try:
+    with engine.connect() as conn:
+        inspector = sa_inspect(engine)
+        cols = [c["name"].lower() for c in inspector.get_columns("query_logs")]
+        if "agent_type" not in cols:
+            conn.execute(text("ALTER TABLE query_logs ADD agent_type VARCHAR2(20) DEFAULT 'RAG'"))
+            conn.commit()
+except Exception:
+    pass
 # Crear app
 app = FastAPI(title="RAG Normativas API")
 # Incluir routers

@@ -7,7 +7,7 @@ from sqlalchemy import Identity
 class ActivityLog(Base):
     __tablename__ = "activity_logs"
 
-    id = Column(Integer, Identity(start=1), primary_key=True)
+    id = Column(Integer, Identity(start=1, increment=1), primary_key=True)
 
     user_id = Column(Integer, ForeignKey("users.id"))
 

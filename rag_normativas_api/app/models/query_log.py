@@ -8,7 +8,7 @@ from sqlalchemy import Text
 class QueryLog(Base):
     __tablename__ = "query_logs"
 
-    id = Column(Integer, Identity(start=1, increment=1), primary_key=True, index=True)
+    id = Column(Integer, Identity(start=1, increment=1), primary_key=True)
     user_id = Column(Integer)
     faculty = Column(String(150))
     question = Column(String(3000))

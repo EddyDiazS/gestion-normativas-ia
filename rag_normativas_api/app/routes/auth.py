@@ -5,9 +5,19 @@ from fastapi.security import OAuth2PasswordRequestForm
 from app.database import get_db
 from app.models.user import User
 from app.models.activity_log import ActivityLog
-from app.core.security import verify_password, create_access_token
+from app.core.security import verify_password, create_access_token, get_current_user
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
+
+@router.get("/me")
+def me(current_user=Depends(get_current_user)):
+    """Valida el JWT y devuelve datos del usuario (usado por el frontend al cargar `/`)."""
+    return {
+        "username": current_user.username,
+        "role": current_user.role,
+        "faculty": current_user.faculty,
+        "program": current_user.program,
+    }
 
 @router.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
